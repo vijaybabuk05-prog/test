@@ -1,0 +1,41 @@
+
+name: Build Ignition Module (.modl)
+
+on:
+  workflow_dispatch:
+    inputs:
+      ignitionVersion:
+        description: 'Ignition SDK Version (e.g., 8.1.20 or 8.3.0)'
+        required: true
+        default: '8.1.20'
+      javaVersion:
+        description: 'Java toolchain version (11 for 8.1.x, 17 for 8.3.x)'
+        required: true
+        default: '11'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: ${{ github.event.inputs.javaVersion }}
+
+      - name: Cache Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build .modl
+        run: |
+          ./gradlew --version
+          ./gradlew clean buildModl -PignitionVersion=${{ github.event.inputs.ignitionVersion }} -PjavaVersion=${{ github.event.inputs.javaVersion }}
+
+      - name: Upload module artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: my-jar-bridge-${{ github.event.inputs.ignitionVersion }}
+          path: build/distributions/*.modl
